@@ -232,6 +232,7 @@ int main() {
         printf("1. Play 1-Player (vs Bash Bot)\n");
         printf("2. Play 2-Player (same laptop)\n");
         printf("3. Exit\n");
+        printf("4. Start Auto 1v1 (C vs Bash on GCP)\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
         getchar(); // flush newline
@@ -246,6 +247,43 @@ int main() {
             case 3:
                 printf("Goodbye!\n");
                 return 0;
+            case 4: {
+                char state[16];
+                char status[64];
+                char choice;
+
+                printf(" Start your bots manually on the GCP VM before continuing.\n");
+                printf("Press Enter when ready to begin...\n");
+                getchar();
+                do {
+                // Send START to trigger the bots
+                system("mosquitto_pub -h 34.145.113.189 -t ttt/game/auto -m \"START\"");
+                // Watch the game
+                while (1) {
+                    get_board_state(state);
+                    draw_board(state);
+                    get_game_status(status);
+                    printf("Status: %s\n", status);
+                    Sleep(1500);
+                        if (strstr(status, "Winner:") || strcmp(status, "Draw") == 0) {
+                            printf("Game over.\n");
+                            break;
+                        }
+                    }
+                    printf("Play again? (y/n): ");
+                    choice = getchar();
+                    getchar(); // flush newline
+
+                    if (choice == 'y' || choice == 'Y') {
+                        system("mosquitto_pub -h 34.145.113.189 -t ttt/game/reset -m \"reset\"");
+                        Sleep(2000);
+                    }
+
+                    } while (choice == 'y' || choice == 'Y');
+
+             break;
+            }
+    
             default:
                 printf("Invalid choice. Try again.\n");
         }
